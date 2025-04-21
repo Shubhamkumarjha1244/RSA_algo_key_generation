@@ -125,9 +125,7 @@ module prbs_8bit(clk,sel,start,out);
         input clk,start;
         input[1:0] sel;
         output reg[7:0] out=0;
-        wire one_hz_clk;
-        hundred_mhz_clock_divider hmc(clk,one_hz_clk);
-        always @(posedge one_hz_clk)
+        always @(posedge clk)
         if(start==1'b1)
         case (sel)
             2'b00:
@@ -445,13 +443,12 @@ module memory_based_prime_generator(clk,start,sel_8,sel_16,prime);
             mem[254]=16'd63979;
             mem[255]=16'd63997;
     end
-            
-               
+                        
 endmodule
 
-///////////////////////////////////////////////////////////////////////////////
-///multiplier block
-//last Adder block (tested)
+///////////////////////////////////////////////////////////////////////////////////
+///////multiplier block
+////last Adder block (tested)
 module last_fa(sum_in,carry_in,x,y,out);
     parameter size=17; //size of multiplier and multiplicant
     input[size-3:0] sum_in;//sum_in value of last horizontal block
@@ -593,128 +590,159 @@ module woogh_boogly(input1,input2,product);
     
 endmodule
 
-//////////////////////////////////////////////////
-/////Private key generator with concept of parallelism
+////////////////////////////////////////////////////
+///////Private key generator with concept of parallelism
 
-module private_key_generator(public_key,phi,private_key);
+module private_key_generator(clk,public_key,phi,private_key);
+    input clk;
     input[15:0] public_key;
     input[31:0] phi;
     output reg [15:0] private_key=1'b0;
+    reg[31:0] lhs,mul;
+    reg[15:0] rhs=1;
     
     reg[15:0] count_1=16'd0,count_2=16'd10000,count_3=16'd20000,count_4=16'd30000,count_5=16'd40000,count_6=16'd50000,count_7=16'd60000;
-    reg[31:0] lhs;
+     
     
-    always @(*)
-        if((count_1!=16'd10000) & (private_key==1'b0))
+    always @(posedge clk)
+        if(private_key==0)
             begin
-            lhs=(count_1*public_key)%phi;
-            if (lhs==1'b1)
+            count_1=count_1+1;
+            mul=(count_1*public_key);
+            lhs=mul%phi;
+            
+            if (lhs==rhs)
                 private_key=count_1;
-            else
-                count_1=count_1+1'b1;
+            if((count_1==16'hffff) |(private_key==0))
+                        rhs=rhs+1;
            end     
-    always @(*)
-        if((count_2!=16'd20000) & (private_key==1'b0))
-            begin
-            lhs=(count_2*public_key)%phi;
-            if (lhs==1'b1)
-                private_key=count_2;
-            else
-                count_2=count_2+1'b1;
-           end 
-    always @(*)
-        if((count_3!=16'd30000) & (private_key==1'b0))
-            begin
-            lhs=(count_3*public_key)%phi;
-            if (lhs==1'b1)
-                private_key=count_3;
-            else
-                count_3=count_3+1'b1;
-           end     
-    always @(*)
-        if((count_4!=16'd40000) & (private_key==1'b0))
-            begin
-            lhs=(count_4*public_key)%phi;
-            if (lhs==1'b1)
-                private_key=count_4;
-            else
-                count_4=count_4+1'b1;
-           end    
-    always @(*)
-        if((count_5!=16'd50000) & (private_key==1'b0))
-            begin
-            lhs=(count_5*public_key)%phi;
-            if (lhs==1'b1)
-                private_key=count_5;
-            else
-                count_5=count_5+1'b1;
-           end  
-    always @(*)
-        if((count_6!=16'd60000) & (private_key==1'b0))
-            begin
-            lhs=(count_6*public_key)%phi;
-            if (lhs==1'b1)
-                private_key=count_6;
-            else
-                count_6=count_6+1'b1;
-           end 
-    always @(*)
-        if((count_7!=16'hFFFF) & (private_key==1'b0))
-            begin
-            lhs=(count_7*public_key)%phi;
-            if (lhs==1'b1)
-                private_key=count_7;
-            else
-                count_7=count_7+1'b1;
-           end  
+           
+           
+//    always @(*)
+//        if((count_2!=16'd20000) & (private_key==1'b0))
+            
+//    always @(*)
+//        if((count_3!=16'd30000) & (private_key==1'b0))
+//            begin
+//            lhs=(count_3*public_key)%phi;
+//            if (lhs==1'b1)
+//                private_key=count_3;
+//            else
+//                count_3=count_3+1'b1;
+//           end     
+//    always @(*)
+//        if((count_4!=16'd40000) & (private_key==1'b0))
+//            begin
+//            lhs=(count_4*public_key)%phi;
+//            if (lhs==1'b1)
+//                private_key=count_4;
+//            else
+//                count_4=count_4+1'b1;
+//           end    
+//    always @(*)
+//        if((count_5!=16'd50000) & (private_key==1'b0))
+//            begin
+//            lhs=(count_5*public_key)%phi;
+//            if (lhs==1'b1)
+//                private_key=count_5;
+//            else
+//                count_5=count_5+1'b1;
+//           end  
+//    always @(*)
+//        if((count_6!=16'd60000) & (private_key==1'b0))
+//            begin
+//            lhs=(count_6*public_key)%phi;
+//            if (lhs==1'b1)
+//                private_key=count_6;
+//            else
+//                count_6=count_6+1'b1;
+//           end 
+//    always @(*)
+//        if((count_7!=16'hFFFF) & (private_key==1'b0))
+//            begin
+//            lhs=(count_7*public_key)%phi;
+//            if (lhs==1'b1)
+//                private_key=count_7;
+//            else
+//                count_7=count_7+1'b1;
+//           end  
 endmodule
 
 
-module rsa_key_gen(clk,start,sel_8,sel_16,private_key,public_key);
+module rsa_key_gen(clk,start,sel_8,sel_16,private_key,wire_final_public_key,wire_final_n,prime1);
     input clk,start;
     input[1:0] sel_8;
     input[2:0] sel_16;
+    output [15:0] wire_final_public_key;
+    output [15:0] private_key;
+    output[15:0] prime1;
+    output[31:0] wire_final_n;
     
-    output [15:0] public_key,private_key;
+    reg flag=0;
     
-    wire[15:0] prime1,prime2;
+    wire[15:0]prime2;
     wire[16:0] prime1_padded,prime2_padded,sub1_padded,sub2_padded;
     wire[15:0] sub1,sub2;
-    
     wire[31:0] phi,n;
-    
-    
-    //Prime generator
-    memory_based_prime_generator mbpg1(clk,start,sel_8,sel_16,prime1);
-    memory_based_prime_generator mbpg2(clk,start,sel_8,sel_16,prime2);
-    
-    assign prime1_padded={0,prime1};
-    assign prime2_padded={0,prime2};
-    
-    
+    wire[15:0] public_key;
+    reg[31:0] final_phi,final_n;
+    reg[15:0] final_public_key;
+    wire[31:0] wire_final_phi;
+    reg flag_delay=1;
+    reg[3:0] count=0;
+                
+       assign wire_final_phi=final_phi;
+       assign wire_final_n=final_n;
+       assign wire_final_public_key=final_public_key;
+       
+       assign prime1_padded={0,prime1};
+       assign prime2_padded={0,prime2};
+           
     //substractor block
     
     assign sub1=prime1-1;
-    assign sub2=prime1-1;
+    assign sub2=prime2-1;
     
     //substractor padded
     assign sub1_padded={0,sub1};
     assign sub2_padded={0,sub2};
     
-    
-    
+  
+    //Prime generator
+    memory_based_prime_generator mbpg1(clk,start,sel_8+1,sel_16,prime1);
+    memory_based_prime_generator mbpg2(clk,start,sel_8,sel_16+2,prime2);
+      
     //multiplier block
     woogh_boogly wb1(prime1_padded,prime2_padded,n);
     woogh_boogly wb2(sub1_padded,sub2_padded,phi);
     
-    
     //public key generator
-    memory_based_prime_generator mbpg3(clk,start,sel_8,sel_16+2'd2,public_key);
+    memory_based_prime_generator mbpg3(clk,start,sel_8+3,sel_16+2'd2,public_key);
+    
+    always @(posedge clk)
+        begin
+        count<=count+1'b1;
+        if(count==4'd10)
+                flag_delay=0;
+        end
+        
+    
+    always @(posedge clk)
+        if(flag==0 & flag_delay==0)
+            begin
+                final_phi=phi;
+                final_n=n;
+                final_public_key=public_key;
+                flag=1;
+            end
+
+           
     
     
     
     //private key generator
-    private_key_generator pkg(public_key,phi,private_key);
+    private_key_generator pkg(clk,wire_final_public_key,wire_final_phi,private_key);
+    
         
 endmodule
 
@@ -775,6 +803,67 @@ module seg7decimal(clk,x,seg,an,dp);
         end
 endmodule
 
+module key_cache(clk,key,private_key,wire_final_public_key,n, out_private_key,out_wire_final_public_key,out_n);
+    input clk;
+    input[2:0] key;
+    input[15:0] private_key,wire_final_public_key;
+    input[31:0] n;
+    
+    output[15:0] out_private_key,out_wire_final_public_key;
+    output[31:0] out_n;
+    
+    reg[15:0] public_key_cache[2:0];
+    reg[15:0] private_key_cache[2:0];
+    reg[31:0] n_key_cache[2:0];
+    
+    assign out_private_key=private_key_cache[key];
+    assign out_wire_final_public_key=public_key_cache[key];
+    assign out_n=n_key_cache[key];
+    
+    initial
+        begin
+            public_key_cache[0]=16'd31;
+            private_key_cache[0]=16'd43301;
+            n_key_cache[0]=32'd2249143156;
+            
+            public_key_cache[1]=16'd47;
+            private_key_cache[1]=16'd34481;
+            n_key_cache[1]=32'd2312257920;
+    
+            public_key_cache[2]=16'd41;
+            private_key_cache[2]=16'd50663;
+            n_key_cache[2]=32'd2343641136;
+            
+            public_key_cache[3]=16'd23;
+            private_key_cache[3]=16'd39367;
+            n_key_cache[3]=32'd2257668379;
+            
+            public_key_cache[4]=16'd37;
+            private_key_cache[4]=16'd51901;
+            n_key_cache[4]=32'd2399203027;
+            
+            public_key_cache[5]=16'd29;
+            private_key_cache[5]=16'd29785;
+            n_key_cache[5]=32'd2159638763;
+            
+            public_key_cache[6]=16'd19;
+            private_key_cache[6]=16'd44347;
+            n_key_cache[6]=32'd2101962941;
+            
+            public_key_cache[6]=16'd19;
+            private_key_cache[6]=16'd44347;
+            n_key_cache[6]=32'd2101962941;
+            
+            public_key_cache[7]=wire_final_public_key;
+            private_key_cache[7]=private_key;
+            n_key_cache[7]=n;
+          
+       end  
+       
+    
+ endmodule
+    
+
 module seven_seg_random_prime_generator(clk,start,sel_8,sel_16,seg,an,dp);
         input clk;
         input start;
@@ -785,8 +874,19 @@ module seven_seg_random_prime_generator(clk,start,sel_8,sel_16,seg,an,dp);
         output[7:0] an;
         output[6:0] seg;
         output dp;
-        wire[15:0] private_key,public_key;
+        wire[15:0] private_key,public_key,prime1;
+        wire[31:0] n;
         
-        rsa_key_gen rsa(clk,start,sel_8,sel_16,private_key,public_key);
+        wire[15:0] out_private_key,out_wire_final_public_key;
+        wire[31:0] out_n;
+        wire flag;
+        wire[31:0] led_input;
+        
+        
+        
+        rsa_key_gen rsa(clk,start,sel_8,sel_16,private_key,public_key,prime1,n);
+        key_cache kc(clk,prime1,private_key,public_key,n,out_private_key,out_wire_final_public_key,out_n);
+        assign led_input=out_private_key+out_wire_final_public_key;
         seg7decimal display(clk,{private_key,public_key},seg,an,dp);
+        
 endmodule
